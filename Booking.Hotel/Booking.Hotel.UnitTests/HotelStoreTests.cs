@@ -5,6 +5,8 @@ using Xunit;
 using Booking.Hotel.Domain;
 using System.Collections.Generic;
 using System;
+using Microsoft.Extensions.Logging;
+using Moq;
 
 namespace Booking.Hotel.UnitTests
 {
@@ -12,9 +14,14 @@ namespace Booking.Hotel.UnitTests
     {
         private readonly HotelStore _hotelStore;
         private readonly PagedResponse _pagedResponse;
+        private readonly Mock<ILogger<HotelStore>> _logger;
         public HotelStoreTests()
         {
-            _hotelStore = new HotelStore();
+
+            var factory = new MockRepository(MockBehavior.Default);
+
+            _logger = factory.Create<ILogger<HotelStore>>();
+            _hotelStore = new HotelStore(_logger.Object);
             _pagedResponse = new PagedResponse
             {
                 PageNumber = 1,
@@ -128,8 +135,8 @@ namespace Booking.Hotel.UnitTests
 
         [Theory]
         [InlineData(33.844843, -45.54911)]
-        [InlineData( -45.54911, 33.844843)]
-        public async Task GetHotelByGeoLocationValidInputShouldReturnData(double longitude,double latitude)
+        [InlineData(-45.54911, 33.844843)]
+        public async Task GetHotelByGeoLocationValidInputShouldReturnData(double longitude, double latitude)
         {
             //Arange
             var geoCordinate = new GeoCoordinates
@@ -140,7 +147,7 @@ namespace Booking.Hotel.UnitTests
             _pagedResponse.PageNumber = 1;
             _pagedResponse.PageSize = 50;
             //Act
-            var hotelResponse = await _hotelStore.GetHotelByGeoLocation(geoCordinate, _pagedResponse,100).ConfigureAwait(false);
+            var hotelResponse = await _hotelStore.GetHotelByGeoLocation(geoCordinate, _pagedResponse, 11135686).ConfigureAwait(false);
 
             //Assert
             hotelResponse.Should().NotBeEmpty();

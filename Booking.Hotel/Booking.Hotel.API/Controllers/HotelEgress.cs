@@ -14,8 +14,9 @@ namespace Booking.Hotel.API.Controllers
     /// </summary>
     /// <seealso cref="Microsoft.AspNetCore.Mvc.ControllerBase" />
     /// <seealso cref="ControllerBase" />
+    [Route("v1/api/[controller]")]
+    [Produces("application/json")]
     [ApiController]
-    [Route("[controller]")]
     public class HotelEgress : ControllerBase
     {
         /// <summary>
@@ -39,7 +40,7 @@ namespace Booking.Hotel.API.Controllers
         }
 
         /// <summary>
-        /// Returns Hotel Deails for Valid Input
+        /// Returns Hotel Deails based on Filter Condinitions
         /// </summary>
         /// <param name="hotelCode">hotelCode : GUID Type</param>
         /// <param name="ct">Cancellation Token</param>
@@ -47,7 +48,7 @@ namespace Booking.Hotel.API.Controllers
         [ProducesResponseType(200, Type = typeof(HotelDetails))]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        [HttpGet("Details/{hotelCode}", Name = "v1/HotelDetails")]
+        [HttpGet("details/{hotelCode}", Name = "v1/HotelDetails")]
         public async Task<ActionResult> GetHotelDetails([FromRoute] string hotelCode, CancellationToken ct)
         {
             if (!ct.IsCancellationRequested && !string.IsNullOrWhiteSpace(hotelCode))
@@ -65,7 +66,7 @@ namespace Booking.Hotel.API.Controllers
 
 
         /// <summary>
-        /// Gets the hotel by preference.
+        /// Gets the hotel by preferences.
         /// </summary>
         /// <param name="requestDetails">The request details.</param>
         /// <param name="ct">The ct.</param>
@@ -142,7 +143,7 @@ namespace Booking.Hotel.API.Controllers
 
 
         /// <summary>
-        /// Removes the booking.
+        /// Remove the booking.
         /// </summary>
         /// <param name="bookingid">The bookingid.</param>
         /// <param name="ct">The ct.</param>

@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using GeoCoordinatePortable;
+using Microsoft.Extensions.Logging;
 
 namespace Booking.Hotel.Data
 {
@@ -18,11 +19,15 @@ namespace Booking.Hotel.Data
         /// </summary>
         private readonly List<BookingDetails> _bookingDetails;
 
+
+        private readonly ILogger<HotelStore> _logger;
+
         /// <summary>
         /// Initializes a new instance of the <see cref="HotelStore"/> class.
         /// </summary>
-        public HotelStore()
+        public HotelStore(ILogger<HotelStore> logger)
         {
+            _logger = logger;
             _bookingDetails = new List<BookingDetails>();
         }
 
@@ -34,9 +39,19 @@ namespace Booking.Hotel.Data
         /// <exception cref="System.NotImplementedException"></exception>
         public async Task<HotelDetails> GetHotelDetails(string hotelCode)
         {
-            return Guid.TryParse(hotelCode, out Guid hotelGuid)
-                ? await Task.FromResult(HoteDetailsStore.FirstOrDefault(x => x.HotelCode == hotelGuid && x.IsActive))
-                : null;
+            try
+            {
+                _logger.LogInformation($"{nameof(HotelStore)}:{nameof(GetHotelDetails)} Started at {DateTime.UtcNow} ");
+
+                return Guid.TryParse(hotelCode, out Guid hotelGuid)
+                        ? await Task.FromResult(HoteDetailsStore.FirstOrDefault(x => x.HotelCode == hotelGuid && x.IsActive))
+                        : null;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.Message, $"{nameof(HotelStore)}:{nameof(GetHotelDetails)} Erroed at {DateTime.UtcNow} ");
+                return null;
+            }
         }
 
         /// <summary>
@@ -51,24 +66,34 @@ namespace Booking.Hotel.Data
         {
             //Filterdown Number of Hotel Based on Radius from Current Postion of User
 
-            if (preferenceType == PreferenceType.Recommanded)
+            try
             {
-                return await GetRecommendedHotels(pagedResponse).ConfigureAwait(false);
-            }
+                _logger.LogInformation($"{nameof(HotelStore)}:{nameof(GetHotelsByPreference)} Started at {DateTime.UtcNow} ");
 
-            if (preferenceType == PreferenceType.Popular)
-            {
-                return await GetPopularHotels(pagedResponse).ConfigureAwait(false);
-            }
+                if (preferenceType == PreferenceType.Recommanded)
+                {
+                    return await GetRecommendedHotels(pagedResponse).ConfigureAwait(false);
+                }
 
-            if (preferenceType == PreferenceType.TopRating)
-            {
-                return await getTopRatedHotels(pagedResponse).ConfigureAwait(false);
+                if (preferenceType == PreferenceType.Popular)
+                {
+                    return await GetPopularHotels(pagedResponse).ConfigureAwait(false);
+                }
+
+                if (preferenceType == PreferenceType.TopRating)
+                {
+                    return await getTopRatedHotels(pagedResponse).ConfigureAwait(false);
+                }
+                return await Task.FromResult(
+                      HoteDetailsStore.Skip((pagedResponse.PageNumber - 1) * pagedResponse.PageSize)
+                      .Take(pagedResponse.PageSize)
+                      .ToList());
             }
-            return await Task.FromResult(
-                  HoteDetailsStore.Skip((pagedResponse.PageNumber - 1) * pagedResponse.PageSize)
-                  .Take(pagedResponse.PageSize)
-                  .ToList());
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.Message, $"{nameof(HotelStore)}:{nameof(GetHotelsByPreference)} Erroed at {DateTime.UtcNow} ");
+                return null;
+            }
         }
 
         /// <summary>
@@ -120,18 +145,29 @@ namespace Booking.Hotel.Data
         /// <exception cref="System.NotImplementedException"></exception>
         public Task<List<HotelDetails>> GetHotelByGeoLocation(GeoCoordinates geoCoordinates, PagedResponse pagedResponse, int radius = 5)
         {
-            var currentLocation = new GeoCoordinate(geoCoordinates.Latitude, geoCoordinates.Longitutde);
+            try
+            {
+                _logger.LogInformation($"{nameof(HotelStore)}:{nameof(GetHotelByGeoLocation)} Started at {DateTime.UtcNow} ");
 
-            var hotelResponse = HoteDetailsStore.Select(x =>
-              new
-              {
-                  HotelDetails = x,
-                  Distance = currentLocation.GetDistanceTo(new GeoCoordinate(x.Location.GeoCoordinates.Latitude, x.Location.GeoCoordinates.Longitutde))
-              });
-            return Task.FromResult(hotelResponse.OrderBy(x => x.Distance).Where(x => x.Distance < radius).Select(x => x.HotelDetails)
-                .Skip((pagedResponse.PageNumber - 1) * pagedResponse.PageSize)
-                   .Take(pagedResponse.PageSize)
-                   .ToList());
+                var currentLocation = new GeoCoordinate(geoCoordinates.Latitude, geoCoordinates.Longitutde);
+
+                var hotelResponse = HoteDetailsStore.Select(x =>
+                  new
+                  {
+                      HotelDetails = x,
+                      Distance = currentLocation.GetDistanceTo(new GeoCoordinate(x.Location.GeoCoordinates.Latitude, x.Location.GeoCoordinates.Longitutde))
+                  });
+                return Task.FromResult(hotelResponse.OrderBy(x => x.Distance).Where(x => x.Distance < radius).Select(x => x.HotelDetails)
+                    .Skip((pagedResponse.PageNumber - 1) * pagedResponse.PageSize)
+                       .Take(pagedResponse.PageSize)
+                       .ToList());
+            }
+            catch (Exception ex)
+            {
+
+                _logger.LogError(ex.Message, $"{nameof(HotelStore)}:{nameof(GetHotelByGeoLocation)} Erroed at {DateTime.UtcNow} ");
+                return Task.FromResult<List<HotelDetails>>(null);
+            }
         }
 
         /// <summary>
@@ -142,23 +178,34 @@ namespace Booking.Hotel.Data
         /// <exception cref="System.NotImplementedException"></exception>
         public Task<bool> AddBooking(BookingDetails bookingDetails)
         {
-            var existingBooking = _bookingDetails.Where(x => x.CustomerId == bookingDetails.CustomerId && x.HotelId == bookingDetails.HotelId && x.RoomId == bookingDetails.RoomId && x.isActive);
-            if (existingBooking != null)
+            try
             {
-                //Check if Booking is Falling in Same Time Range
-                var isSameBooking = existingBooking.Any(x => x.CheckIn >= bookingDetails.CheckIn && x.CheckOut <= bookingDetails.CheckOut);
-                if (!isSameBooking)
+                _logger.LogInformation($"{nameof(HotelStore)}:{nameof(AddBooking)} Started at {DateTime.UtcNow} ");
+
+                var existingBooking = _bookingDetails.Where(x => x.CustomerId == bookingDetails.CustomerId && x.HotelId == bookingDetails.HotelId && x.RoomId == bookingDetails.RoomId && x.isActive);
+                if (existingBooking != null)
                 {
-                    _bookingDetails.Add(bookingDetails);
-                    return Task.FromResult(true);
+                    //Check if Booking is Falling in Same Time Range
+                    var isSameBooking = existingBooking.Any(x => x.CheckIn >= bookingDetails.CheckIn && x.CheckOut <= bookingDetails.CheckOut);
+                    if (!isSameBooking)
+                    {
+                        _bookingDetails.Add(bookingDetails);
+                        return Task.FromResult(true);
+                    }
+                    else
+                    {
+                        return Task.FromResult(false);
+                    }
                 }
-                else
-                {
-                    return Task.FromResult(false);
-                }
+                _bookingDetails.Add(bookingDetails);
+                return Task.FromResult(true);
             }
-            _bookingDetails.Add(bookingDetails);
-            return Task.FromResult(true);
+            catch (Exception ex)
+            {
+
+                _logger.LogError(ex.Message, $"{nameof(HotelStore)}:{nameof(AddBooking)} Erroed at {DateTime.UtcNow} ");
+                return Task.FromResult<bool>(false);
+            }
 
         }
 
@@ -169,13 +216,24 @@ namespace Booking.Hotel.Data
         /// <returns></returns>
         public Task<bool> RemoveBooking(Guid bookingId)
         {
-            var bookingDetails = _bookingDetails.Find(x => x.Id == bookingId);
-            if (bookingDetails != null)
+            try
             {
-                bookingDetails.isActive = false;
-                return Task.FromResult(true);
+                _logger.LogInformation($"{nameof(HotelStore)}:{nameof(RemoveBooking)} Started at {DateTime.UtcNow} ");
+
+                var bookingDetails = _bookingDetails.Find(x => x.Id == bookingId);
+                if (bookingDetails != null)
+                {
+                    bookingDetails.isActive = false;
+                    return Task.FromResult(true);
+                }
+                return Task.FromResult(false);
             }
-            return Task.FromResult(false);
+            catch (Exception ex)
+            {
+
+                _logger.LogError(ex.Message, $"{nameof(HotelStore)}:{nameof(RemoveBooking)} Erroed at {DateTime.UtcNow} ");
+                return Task.FromResult<bool>(false);
+            }
         }
 
         /// <summary>
@@ -187,10 +245,19 @@ namespace Booking.Hotel.Data
         /// <exception cref="System.NotImplementedException"></exception>
         public async Task<List<HotelDetails>> FindHotelByName(string name, PagedResponse pagedResponse)
         {
-            return await Task.FromResult(
-                   HoteDetailsStore.Where(x => x.Name.Contains(name) && x.IsActive).Skip((pagedResponse.PageNumber - 1) * pagedResponse.PageSize)
-                   .Take(pagedResponse.PageSize)
-                   .ToList());
+            try
+            {
+                _logger.LogInformation($"{nameof(HotelStore)}:{nameof(FindHotelByName)} Started at {DateTime.UtcNow} ");
+                return await Task.FromResult(
+                         HoteDetailsStore.Where(x => x.Name.Contains(name) && x.IsActive).Skip((pagedResponse.PageNumber - 1) * pagedResponse.PageSize)
+                         .Take(pagedResponse.PageSize)
+                         .ToList());
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.Message, $"{nameof(HotelStore)}:{nameof(RemoveBooking)} Erroed at {DateTime.UtcNow} ");
+                return await Task.FromResult<List<HotelDetails>>(null).ConfigureAwait(false);
+            }
         }
 
         /// <summary>
