@@ -12,6 +12,7 @@ namespace Booking.Hotel.API.Controllers
     /// <summary>
     /// Base Controller for Hotel Transactions
     /// </summary>
+    /// <seealso cref="Microsoft.AspNetCore.Mvc.ControllerBase" />
     /// <seealso cref="ControllerBase" />
     [ApiController]
     [Route("[controller]")]
@@ -169,7 +170,7 @@ namespace Booking.Hotel.API.Controllers
         /// <summary>
         /// Arrange Hotel by nearby distance
         /// </summary>
-        /// <param name="bookingid">The bookingid.</param>
+        /// <param name="requestParams">The request parameters.</param>
         /// <param name="ct">The ct.</param>
         /// <returns></returns>
         [ProducesResponseType(200, Type = typeof(HotelDetails))]
