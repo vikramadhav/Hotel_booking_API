@@ -18,10 +18,13 @@ namespace Booking.Hotel.Data
         /// <param name="hotelCode">The hotel code.</param>
         /// <returns></returns>
         /// <exception cref="System.NotImplementedException"></exception>
-        public Task<HotelDetails> GetHotelDetails(string hotelCode)
+        public async Task<HotelDetails> GetHotelDetails(string hotelCode)
         {
-            throw new NotImplementedException();
+            return Guid.TryParse(hotelCode, out Guid hotelGuid)
+                ? await Task.FromResult(HoteDetailsStore.FirstOrDefault(x => x.HotelCode == hotelGuid))
+                : null;
         }
+
         /// <summary>
         /// Gets the hotels by preference.
         /// </summary>
@@ -78,7 +81,7 @@ namespace Booking.Hotel.Data
         /// <value>
         /// The hote details store.
         /// </value>
-        private static HashSet<HotelDetails> HoteDetailsStore => new HashSet<HotelDetails>
+        private HashSet<HotelDetails> HoteDetailsStore => new HashSet<HotelDetails>
         {
             new HotelDetails{ Description="Description 1",Facilities= new HashSet<string>{ "BreakFast","WIFI","Parking","Spa"},HotelCode=Guid.Parse("bb25ba04-6a60-4347-9c73-d92ba0a9b29f"),
                 Location=new Location{ Address="Address 1",City="Dubai",Country="UAE",GeoCoordinates=new GeoCoordinates{ Latitude="123",Longitutde="123"}, GoogleLocationCode="",ZipCode=123233 },Name="Hotel 1",
