@@ -34,6 +34,9 @@ namespace Booking.Hotel.Domain
 
         [DataMember]
         public int HotelReviews { get; set; }
+
+        [DataMember]
+        public bool IsActive { get; set; } = true;
     }
 
 }

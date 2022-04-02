@@ -19,12 +19,10 @@ namespace Booking.Hotel.Data
         /// <summary>
         /// Finds the hotel by filters.
         /// </summary>
-        /// <param name="hotelName">Name of the hotel.</param>
-        /// <param name="CheckIn">The check in.</param>
-        /// <param name="Checkout">The checkout.</param>
-        /// <param name="filters">The filters.</param>
+        /// <param name="name">The name.</param>
+        /// <param name="pagedResponse">The paged response.</param>
         /// <returns></returns>
-        Task<List<HotelDetails>> FindHotelByFilters(string hotelName, DateTime CheckIn, DateTime Checkout, List<string> filters);
+        Task<List<HotelDetails>> FindHotelByName(string name, PagedResponse pagedResponse);
         /// <summary>
         /// Gets the hotel by geo location.
         /// </summary>
@@ -43,8 +41,8 @@ namespace Booking.Hotel.Data
         /// </summary>
         /// <param name="preferenceType">Type of the preference.</param>
         /// <param name="radius">The radius.</param>
-        /// <param name="count">The count.</param>
+        /// <param name="pagedResponse">The paged response.</param>
         /// <returns></returns>
-        Task<List<HotelDetails>> GetHotelsByPreference(PreferenceType preferenceType, string radius, int count);
+        Task<List<HotelDetails>> GetHotelsByPreference(PreferenceType preferenceType, int radius, PagedResponse pagedResponse);
     }
 }
