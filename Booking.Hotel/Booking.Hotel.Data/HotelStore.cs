@@ -114,10 +114,11 @@ namespace Booking.Hotel.Data
         /// Gets the hotel by geo location.
         /// </summary>
         /// <param name="geoCoordinates">The geo coordinates.</param>
-        /// <param name="count">The count.</param>
+        /// <param name="pagedResponse">The paged response.</param>
+        /// <param name="radius">The radius.</param>
         /// <returns></returns>
         /// <exception cref="System.NotImplementedException"></exception>
-        public Task<List<HotelDetails>> GetHotelByGeoLocation(GeoCoordinates geoCoordinates, PagedResponse pagedResponse)
+        public Task<List<HotelDetails>> GetHotelByGeoLocation(GeoCoordinates geoCoordinates, PagedResponse pagedResponse, int radius = 5)
         {
             var currentLocation = new GeoCoordinate(geoCoordinates.Latitude, geoCoordinates.Longitutde);
 
@@ -125,12 +126,12 @@ namespace Booking.Hotel.Data
               new
               {
                   HotelDetails = x,
-                  Distance = currentLocation.GetDistanceTo(new GeoCoordinate(x.Location.GeoCoordinates.Latitude,x.Location.GeoCoordinates.Longitutde))
+                  Distance = currentLocation.GetDistanceTo(new GeoCoordinate(x.Location.GeoCoordinates.Latitude, x.Location.GeoCoordinates.Longitutde))
               });
-            return Task.FromResult(hotelResponse.OrderBy(x => x.Distance).Select(x => x.HotelDetails)
+            return Task.FromResult(hotelResponse.OrderBy(x => x.Distance).Where(x => x.Distance < radius).Select(x => x.HotelDetails)
                 .Skip((pagedResponse.PageNumber - 1) * pagedResponse.PageSize)
                    .Take(pagedResponse.PageSize)
-                   .ToList()); ;
+                   .ToList());
         }
 
         /// <summary>

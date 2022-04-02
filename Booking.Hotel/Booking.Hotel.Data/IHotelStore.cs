@@ -35,8 +35,9 @@ namespace Booking.Hotel.Data
         /// </summary>
         /// <param name="geoCoordinates">The geo coordinates.</param>
         /// <param name="pagedResponse">The paged response.</param>
+        /// <param name="radius">The radius.</param>
         /// <returns></returns>
-        Task<List<HotelDetails>> GetHotelByGeoLocation(GeoCoordinates geoCoordinates, PagedResponse pagedResponse);
+        Task<List<HotelDetails>> GetHotelByGeoLocation(GeoCoordinates geoCoordinates, PagedResponse pagedResponse, int radius = 5);
         /// <summary>
         /// Gets the hotel details.
         /// </summary>

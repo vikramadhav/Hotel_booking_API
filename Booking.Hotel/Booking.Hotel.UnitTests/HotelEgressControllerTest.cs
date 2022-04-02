@@ -264,7 +264,7 @@ namespace Booking.Hotel.UnitTests
                 },
                 GeoCoordinates = new GeoCoordinates { Latitude = 47.12112, Longitutde = -23.1212 }
             };
-            _hotelStore.Setup(x => x.GetHotelByGeoLocation(It.IsAny<GeoCoordinates>(), It.IsAny<PagedResponse>())).ReturnsAsync(HoteDetailsStore.Take(2).ToList());
+            _hotelStore.Setup(x => x.GetHotelByGeoLocation(It.IsAny<GeoCoordinates>(), It.IsAny<PagedResponse>(),It.IsAny<int>())).ReturnsAsync(HoteDetailsStore.Take(2).ToList());
             //Act
             var response = await _hotelEgressContaoller.GetHotelByGeoLocation(requestFilter, new CancellationTokenSource().Token).ConfigureAwait(false);
 

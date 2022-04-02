@@ -140,7 +140,7 @@ namespace Booking.Hotel.UnitTests
             _pagedResponse.PageNumber = 1;
             _pagedResponse.PageSize = 50;
             //Act
-            var hotelResponse = await _hotelStore.GetHotelByGeoLocation(geoCordinate, _pagedResponse).ConfigureAwait(false);
+            var hotelResponse = await _hotelStore.GetHotelByGeoLocation(geoCordinate, _pagedResponse,100).ConfigureAwait(false);
 
             //Assert
             hotelResponse.Should().NotBeEmpty();
