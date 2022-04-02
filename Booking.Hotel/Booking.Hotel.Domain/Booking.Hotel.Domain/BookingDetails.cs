@@ -5,7 +5,7 @@ namespace Booking.Hotel.Domain
 {
 
     /// <summary>
-    /// 
+    /// Booking Details DTO
     /// </summary>
     [DataContract]
     public class BookingDetails

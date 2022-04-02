@@ -31,7 +31,7 @@ namespace Booking.Hotel.UnitTests
         private static HashSet<HotelDetails> HoteDetailsStore => new HashSet<HotelDetails>
         {
             new HotelDetails{ Description="Description 1",Facilities= new HashSet<string>{ "BreakFast","WIFI","Parking","Spa"},HotelCode=Guid.Parse("bb25ba04-6a60-4347-9c73-d92ba0a9b29f"),
-                Location=new Location{ Address="Address 1",City="Dubai",Country="UAE",GeoCoordinates=new GeoCoordinates{ Latitude="123",Longitutde="123"}, GoogleLocationCode="",ZipCode=123233 },Name="Hotel 1",
+                Location=new Location{ Address="Address 1",City="Dubai",Country="UAE",GeoCoordinates=new GeoCoordinates{ Latitude=44.968046,Longitutde=-94.420307}, GoogleLocationCode="",ZipCode=123233 },Name="Hotel 1",
                 Photos =new HashSet<HotelPhotos> { new HotelPhotos { Order=1,Uri="https://picsum.photos/id/237/200/300" } , new HotelPhotos { Order=2,Uri= "https://picsum.photos/seed/picsum/200/300" } },
                 RateDetals=new HotelRateCard{ HotelCode=Guid.Parse("bb25ba04-6a60-4347-9c73-d92ba0a9b29f"),Price=100,RoomType="Standrad" }, IsPopular=true,IsRecommanded=true,Ratings=3,HotelReviews=300 },
         };
@@ -41,7 +41,7 @@ namespace Booking.Hotel.UnitTests
         public async Task GetHotelByPreferenceValidInputShouldReturnData()
         {
             //Arrage
-            var requestFilter = new RequestFilters()
+            var requestFilter = new RequestParameters()
             {
                 PreferenceType = PreferenceType.Popular,
                 Radius = 2,
@@ -64,7 +64,7 @@ namespace Booking.Hotel.UnitTests
         public async Task GetHotelByPreferenceInValidInputShouldReturnErrorMessage()
         {
             //Arrage
-            var requestFilter = new RequestFilters()
+            var requestFilter = new RequestParameters()
             {
                 PreferenceType = PreferenceType.Popular,
                 Radius = 2,
@@ -90,7 +90,7 @@ namespace Booking.Hotel.UnitTests
         public async Task GetHotelByNameValidInputShouldReturnData(string hotelName)
         {
             //Arrage
-            var requestFilter = new RequestFilters()
+            var requestFilter = new RequestParameters()
             {
                 HotelName = hotelName,
                 PageDetails = new PagedResponse
@@ -112,7 +112,7 @@ namespace Booking.Hotel.UnitTests
         public async Task GetHotelByNameInValidInputShouldReturnErrorMessage()
         {
             //Arrage
-            var requestFilter = new RequestFilters()
+            var requestFilter = new RequestParameters()
             {
                 HotelName = "SomeName",
                 PageDetails = new PagedResponse
@@ -178,9 +178,6 @@ namespace Booking.Hotel.UnitTests
             response.Should().NotBeNull();
             response.Should().BeOfType<BadRequestObjectResult>();
         }
-
-
-
 
 
         [Fact]
@@ -250,6 +247,30 @@ namespace Booking.Hotel.UnitTests
             //Assert
             response.Should().NotBeNull();
             response.Should().BeOfType<BadRequestObjectResult>();
+        }
+
+
+        [Fact]
+        public async Task GetHotelByGeoLocationValidInputShouldReturnData()
+        {
+            //Arrage
+            var requestFilter = new RequestParameters()
+            {
+
+                PageDetails = new PagedResponse
+                {
+                    PageNumber = 1,
+                    PageSize = 50
+                },
+                GeoCoordinates = new GeoCoordinates { Latitude = 47.12112, Longitutde = -23.1212 }
+            };
+            _hotelStore.Setup(x => x.GetHotelByGeoLocation(It.IsAny<GeoCoordinates>(), It.IsAny<PagedResponse>())).ReturnsAsync(HoteDetailsStore.Take(2).ToList());
+            //Act
+            var response = await _hotelEgressContaoller.GetHotelByGeoLocation(requestFilter, new CancellationTokenSource().Token).ConfigureAwait(false);
+
+            //Assert
+            response.Should().NotBeNull();
+            response.Should().BeOfType<OkObjectResult>();
         }
 
     }

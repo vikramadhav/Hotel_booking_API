@@ -10,9 +10,9 @@ using System.Threading.Tasks;
 namespace Booking.Hotel.API.Controllers
 {
     /// <summary>
-    /// 
+    /// Base Controller for Hotel Transactions
     /// </summary>
-    /// <seealso cref="Microsoft.AspNetCore.Mvc.ControllerBase" />
+    /// <seealso cref="ControllerBase" />
     [ApiController]
     [Route("[controller]")]
     public class HotelEgress : ControllerBase
@@ -27,7 +27,7 @@ namespace Booking.Hotel.API.Controllers
         private readonly ILogger<HotelEgress> _logger;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="HotelEgress"/> class.
+        /// Initializes a new instance of the <see cref="HotelEgress" /> class.
         /// </summary>
         /// <param name="logger">The logger.</param>
         /// <param name="hotelStore">The hotel store.</param>
@@ -73,7 +73,7 @@ namespace Booking.Hotel.API.Controllers
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [HttpPost("GetHotels", Name = "v1/GetHotels")]
-        public async Task<ActionResult> GetHotelByPreference([FromBody] RequestFilters requestDetails, CancellationToken ct)
+        public async Task<ActionResult> GetHotelByPreference([FromBody] RequestParameters requestDetails, CancellationToken ct)
         {
             if (!ct.IsCancellationRequested && requestDetails != null)
             {
@@ -99,7 +99,7 @@ namespace Booking.Hotel.API.Controllers
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [HttpPost("byName", Name = "v1/GetHotelByName")]
-        public async Task<ActionResult> GetHotelByName([FromBody] RequestFilters requestDetails, CancellationToken ct)
+        public async Task<ActionResult> GetHotelByName([FromBody] RequestParameters requestDetails, CancellationToken ct)
         {
             if (!ct.IsCancellationRequested && !string.IsNullOrWhiteSpace(requestDetails.HotelName))
             {
@@ -152,7 +152,7 @@ namespace Booking.Hotel.API.Controllers
         [HttpDelete("cancel", Name = "v1/RemoveBooking")]
         public async Task<ActionResult> RemoveBooking([FromRoute] string bookingid, CancellationToken ct)
         {
-            if (!ct.IsCancellationRequested && Guid.TryParse(bookingid,out Guid id))
+            if (!ct.IsCancellationRequested && Guid.TryParse(bookingid, out Guid id))
             {
                 _logger.LogInformation($"{nameof(HotelEgress)}:{nameof(RemoveBooking)} Started at {DateTime.UtcNow} ");
 
@@ -160,7 +160,33 @@ namespace Booking.Hotel.API.Controllers
 
                 _logger.LogInformation($"{nameof(HotelEgress)}:{nameof(RemoveBooking)} Finished at {DateTime.UtcNow} ");
 
-                return response  ? Ok(response) : BadRequest("Unable to Remove Booking");
+                return response ? Ok(response) : BadRequest("Unable to Remove Booking");
+            }
+            return BadRequest("No Parameters Recieved or Cancellation Requested");
+        }
+
+
+        /// <summary>
+        /// Arrange Hotel by nearby distance
+        /// </summary>
+        /// <param name="bookingid">The bookingid.</param>
+        /// <param name="ct">The ct.</param>
+        /// <returns></returns>
+        [ProducesResponseType(200, Type = typeof(HotelDetails))]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [HttpPost("nearby", Name = "v1/GetHotelByGeoLocation")]
+        public async Task<ActionResult> GetHotelByGeoLocation([FromBody] RequestParameters requestParams, CancellationToken ct)
+        {
+            if (!ct.IsCancellationRequested && requestParams.GeoCoordinates != null)
+            {
+                _logger.LogInformation($"{nameof(HotelEgress)}:{nameof(RemoveBooking)} Started at {DateTime.UtcNow} ");
+
+                var response = await _hotelStore.GetHotelByGeoLocation(requestParams.GeoCoordinates, requestParams.PageDetails ?? new PagedResponse()).ConfigureAwait(false);
+
+                _logger.LogInformation($"{nameof(HotelEgress)}:{nameof(RemoveBooking)} Finished at {DateTime.UtcNow} ");
+
+                return response != null ? Ok(response) : BadRequest("Unable to Remove Booking");
             }
             return BadRequest("No Parameters Recieved or Cancellation Requested");
         }

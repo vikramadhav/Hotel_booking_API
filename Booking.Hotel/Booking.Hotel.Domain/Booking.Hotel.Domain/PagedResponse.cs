@@ -1,13 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Booking.Hotel.Domain
+﻿namespace Booking.Hotel.Domain
 {
     /// <summary>
-    ///  Helps with Page By Reponse
+    ///  Helps with Paginated Response
     /// </summary>
     public class PagedResponse
     {

@@ -126,6 +126,32 @@ namespace Booking.Hotel.UnitTests
         }
 
 
+        [Theory]
+        [InlineData(33.844843, -45.54911)]
+        [InlineData( -45.54911, 33.844843)]
+        public async Task GetHotelByGeoLocationValidInputShouldReturnData(double longitude,double latitude)
+        {
+            //Arange
+            var geoCordinate = new GeoCoordinates
+            {
+                Latitude = latitude,
+                Longitutde = longitude
+            };
+            _pagedResponse.PageNumber = 1;
+            _pagedResponse.PageSize = 50;
+            //Act
+            var hotelResponse = await _hotelStore.GetHotelByGeoLocation(geoCordinate, _pagedResponse).ConfigureAwait(false);
+
+            //Assert
+            hotelResponse.Should().NotBeEmpty();
+            hotelResponse.Should().BeOfType<List<HotelDetails>>();
+            hotelResponse.Should().HaveCountGreaterThanOrEqualTo(1);
+            hotelResponse.ForEach(x => x.Description.Should().NotBeNullOrWhiteSpace());
+            hotelResponse.ForEach(x => x.Name.Should().NotBeNullOrWhiteSpace());
+            hotelResponse.ForEach(x => x.Location.Should().NotBeNull());
+            hotelResponse.ForEach(x => x.RateDetals.Should().NotBeNull());
+        }
+
         [Fact]
         public async Task AddBookingValidInputShouldReturnTrue()
         {

@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using GeoCoordinatePortable;
 
 namespace Booking.Hotel.Data
 {
@@ -12,8 +13,14 @@ namespace Booking.Hotel.Data
     /// <seealso cref="Booking.Hotel.Data.IHotelStore" />
     public class HotelStore : IHotelStore
     {
+        /// <summary>
+        /// The booking details
+        /// </summary>
         private readonly List<BookingDetails> _bookingDetails;
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="HotelStore"/> class.
+        /// </summary>
         public HotelStore()
         {
             _bookingDetails = new List<BookingDetails>();
@@ -37,7 +44,7 @@ namespace Booking.Hotel.Data
         /// </summary>
         /// <param name="preferenceType">Type of the preference.</param>
         /// <param name="radius">The radius.</param>
-        /// <param name="count">The count.</param>
+        /// <param name="pagedResponse">The paged response.</param>
         /// <returns></returns>
         /// <exception cref="System.NotImplementedException"></exception>
         public async Task<List<HotelDetails>> GetHotelsByPreference(PreferenceType preferenceType, int radius, PagedResponse pagedResponse)
@@ -110,9 +117,20 @@ namespace Booking.Hotel.Data
         /// <param name="count">The count.</param>
         /// <returns></returns>
         /// <exception cref="System.NotImplementedException"></exception>
-        public Task<List<HotelDetails>> GetHotelByGeoLocation(GeoCoordinates geoCoordinates, int count)
+        public Task<List<HotelDetails>> GetHotelByGeoLocation(GeoCoordinates geoCoordinates, PagedResponse pagedResponse)
         {
-            throw new NotImplementedException();
+            var currentLocation = new GeoCoordinate(geoCoordinates.Latitude, geoCoordinates.Longitutde);
+
+            var hotelResponse = HoteDetailsStore.Select(x =>
+              new
+              {
+                  HotelDetails = x,
+                  Distance = currentLocation.GetDistanceTo(new GeoCoordinate(x.Location.GeoCoordinates.Latitude,x.Location.GeoCoordinates.Longitutde))
+              });
+            return Task.FromResult(hotelResponse.OrderBy(x => x.Distance).Select(x => x.HotelDetails)
+                .Skip((pagedResponse.PageNumber - 1) * pagedResponse.PageSize)
+                   .Take(pagedResponse.PageSize)
+                   .ToList()); ;
         }
 
         /// <summary>
@@ -183,17 +201,17 @@ namespace Booking.Hotel.Data
         private static HashSet<HotelDetails> HoteDetailsStore => new HashSet<HotelDetails>
         {
             new HotelDetails{ Description="Description 1",Facilities= new HashSet<string>{ "BreakFast","WIFI","Parking","Spa"},HotelCode=Guid.Parse("bb25ba04-6a60-4347-9c73-d92ba0a9b29f"),
-                Location=new Location{ Address="Address 1",City="Dubai",Country="UAE",GeoCoordinates=new GeoCoordinates{ Latitude="123",Longitutde="123"}, GoogleLocationCode="",ZipCode=123233 },Name="Hotel 1",
+                Location=new Location{ Address="Address 1",City="Dubai",Country="UAE",GeoCoordinates=new GeoCoordinates{ Latitude=44.968046,Longitutde=-14.420307}, GoogleLocationCode="",ZipCode=123233 },Name="Hotel 1",
                 Photos =new HashSet<HotelPhotos> { new HotelPhotos { Order=1,Uri="https://picsum.photos/id/237/200/300" } , new HotelPhotos { Order=2,Uri= "https://picsum.photos/seed/picsum/200/300" } },
                 RateDetals=new HotelRateCard{ HotelCode=Guid.Parse("bb25ba04-6a60-4347-9c73-d92ba0a9b29f"),Price=100,RoomType="Standrad" }, IsPopular=true,IsRecommanded=true,Ratings=3,HotelReviews=300 },
 
            new HotelDetails{ Description="Description 2",Facilities= new HashSet<string>{ "BreakFast","WIFI","Parking",},HotelCode=Guid.Parse("988a977f-f776-49ab-b385-c0d2f4143c84"),
-                Location=new Location{ Address="Address 2",City="Abu Dhabi",Country="UAE",GeoCoordinates=new GeoCoordinates{ Latitude="123",Longitutde="123"}, GoogleLocationCode="",ZipCode=3422324 },Name="Hotel 2",
+                Location=new Location{ Address="Address 2",City="Abu Dhabi",Country="UAE",GeoCoordinates=new GeoCoordinates{ Latitude=44.33328,Longitutde=-89.132008}, GoogleLocationCode="",ZipCode=3422324 },Name="Hotel 2",
                 Photos =new HashSet<HotelPhotos> { new HotelPhotos { Order=1,Uri="https://picsum.photos/id/237/200/300" } , new HotelPhotos { Order=2,Uri= "https://picsum.photos/seed/picsum/200/300" } },
                 RateDetals=new HotelRateCard{ HotelCode=Guid.Parse("988a977f-f776-49ab-b385-c0d2f4143c84"),Price=200,RoomType="Deluxe" }, IsPopular=true,IsRecommanded=false,Ratings=2,HotelReviews=500 },
 
            new HotelDetails{ Description="Description 3",Facilities= new HashSet<string>{ "BreakFast","WIFI",},HotelCode=Guid.Parse("676601ee-1f9c-4ff0-9826-777f267ba2ac"),
-                Location=new Location{ Address="Address 3",City="Texas",Country="USA",GeoCoordinates=new GeoCoordinates{ Latitude="123",Longitutde="23"}, GoogleLocationCode="",ZipCode=423 },Name="Hotel 3",
+                Location=new Location{ Address="Address 3",City="Texas",Country="USA",GeoCoordinates=new GeoCoordinates{ Latitude=33.755787,Longitutde=-11.359998}, GoogleLocationCode="",ZipCode=423 },Name="Hotel 3",
                 Photos =new HashSet<HotelPhotos> { new HotelPhotos { Order=1,Uri="https://picsum.photos/id/237/200/300" } , new HotelPhotos { Order=2,Uri= "https://picsum.photos/seed/picsum/200/300" } },
                 RateDetals=new HotelRateCard{ HotelCode=Guid.Parse("676601ee-1f9c-4ff0-9826-777f267ba2ac"),Price=300,RoomType="Suite" }, IsPopular=false,IsRecommanded=true,Ratings=5,HotelReviews=600 },
         };
