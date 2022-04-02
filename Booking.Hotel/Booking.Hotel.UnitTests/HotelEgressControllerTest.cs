@@ -132,6 +132,97 @@ namespace Booking.Hotel.UnitTests
 
 
 
+        [Fact]
+        public async Task AddBookingValidInputShouldReturnData()
+        {
+            //Arrage
+            _hotelStore.Setup(x => x.AddBooking(It.IsAny<BookingDetails>())).ReturnsAsync(true);
+            var bookingDetail = new BookingDetails
+            {
+                CheckIn = (int)(DateTime.UtcNow - new DateTime(1970, 1, 1)).TotalSeconds,
+                CheckOut = (int)(DateTime.UtcNow.AddDays(3) - new DateTime(1970, 1, 1)).TotalSeconds,
+                CustomerId = Guid.NewGuid(),
+                HotelId = Guid.NewGuid(),
+                Id = Guid.NewGuid(),
+                isActive = true,
+                RoomId = new Random().Next(1, 100)
+            };
+            //Act
+            var response = await _hotelEgressContaoller.AddBooking(bookingDetail, new CancellationTokenSource().Token).ConfigureAwait(false);
+
+            //Assert
+            response.Should().NotBeNull();
+            response.Should().BeOfType<OkObjectResult>();
+        }
+
+        [Fact]
+        public async Task AddBookingInValidInputShouldReturnErrorMessage()
+        {
+            //Arrage
+            _hotelStore.Setup(x => x.AddBooking(It.IsAny<BookingDetails>())).ReturnsAsync(false);
+            var bookingDetail = new BookingDetails
+            {
+                CheckIn = (int)(DateTime.UtcNow - new DateTime(1970, 1, 1)).TotalSeconds,
+                CheckOut = (int)(DateTime.UtcNow.AddDays(3) - new DateTime(1970, 1, 1)).TotalSeconds,
+                CustomerId = Guid.NewGuid(),
+                HotelId = Guid.NewGuid(),
+                Id = Guid.NewGuid(),
+                isActive = true,
+                RoomId = new Random().Next(1, 100)
+            };
+
+            //Act
+            var response = await _hotelEgressContaoller.AddBooking(bookingDetail, new CancellationTokenSource().Token).ConfigureAwait(false);
+
+            //Assert
+            response.Should().NotBeNull();
+            response.Should().BeOfType<BadRequestObjectResult>();
+        }
+
+
+
+
+
+        [Fact]
+        public async Task RemoveBookingValidInputShouldReturnData()
+        {
+            //Arrage
+            _hotelStore.Setup(x => x.AddBooking(It.IsAny<BookingDetails>())).ReturnsAsync(true);
+            _hotelStore.Setup(x => x.RemoveBooking(It.IsAny<Guid>())).ReturnsAsync(true);
+            var bookingDetail = new BookingDetails
+            {
+                CheckIn = (int)(DateTime.UtcNow - new DateTime(1970, 1, 1)).TotalSeconds,
+                CheckOut = (int)(DateTime.UtcNow.AddDays(3) - new DateTime(1970, 1, 1)).TotalSeconds,
+                CustomerId = Guid.NewGuid(),
+                HotelId = Guid.NewGuid(),
+                Id = Guid.NewGuid(),
+                isActive = true,
+                RoomId = new Random().Next(1, 100)
+            };
+            //Act
+            _ = await _hotelEgressContaoller.AddBooking(bookingDetail, new CancellationTokenSource().Token).ConfigureAwait(false);
+            var response = await _hotelEgressContaoller.RemoveBooking(bookingDetail.Id.ToString(), new CancellationTokenSource().Token).ConfigureAwait(false);
+
+            //Assert
+            response.Should().NotBeNull();
+            response.Should().BeOfType<OkObjectResult>();
+        }
+
+        [Fact]
+        public async Task RemoveBookingInValidInputShouldReturnErrorMessage()
+        {
+            //Arrage
+            _hotelStore.Setup(x => x.RemoveBooking(It.IsAny<Guid>())).ReturnsAsync(false);
+
+            //Act
+            var response = await _hotelEgressContaoller.RemoveBooking(Guid.NewGuid().ToString(), new CancellationTokenSource().Token).ConfigureAwait(false);
+
+            //Assert
+            response.Should().NotBeNull();
+            response.Should().BeOfType<BadRequestObjectResult>();
+        }
+
+
         [Theory]
         [InlineData("bb25ba04-6a60-4347-9c73-d92ba0a9b29f")]
         public async Task GetHotelDetailsValidInputShouldReturnData(string hotelCode)

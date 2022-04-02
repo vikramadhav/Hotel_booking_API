@@ -123,16 +123,47 @@ namespace Booking.Hotel.Data
         /// <exception cref="System.NotImplementedException"></exception>
         public Task<bool> AddBooking(BookingDetails bookingDetails)
         {
-            throw new NotImplementedException();
+            var existingBooking = _bookingDetails.Where(x => x.CustomerId == bookingDetails.CustomerId && x.HotelId == bookingDetails.HotelId && x.RoomId == bookingDetails.RoomId && x.isActive);
+            if (existingBooking != null)
+            {
+                //Check if Booking is Falling in Same Time Range
+                var isSameBooking = existingBooking.Any(x => x.CheckIn >= bookingDetails.CheckIn && x.CheckOut <= bookingDetails.CheckOut);
+                if (!isSameBooking)
+                {
+                    _bookingDetails.Add(bookingDetails);
+                    return Task.FromResult(true);
+                }
+                else
+                {
+                    return Task.FromResult(false);
+                }
+            }
+            _bookingDetails.Add(bookingDetails);
+            return Task.FromResult(true);
+
+        }
+
+        /// <summary>
+        /// Set the Booking as InActive
+        /// </summary>
+        /// <param name="bookingId">The booking identifier.</param>
+        /// <returns></returns>
+        public Task<bool> RemoveBooking(Guid bookingId)
+        {
+            var bookingDetails = _bookingDetails.Find(x => x.Id == bookingId);
+            if (bookingDetails != null)
+            {
+                bookingDetails.isActive = false;
+                return Task.FromResult(true);
+            }
+            return Task.FromResult(false);
         }
 
         /// <summary>
         /// Finds the hotel by filters.
         /// </summary>
-        /// <param name="hotelName">Name of the hotel.</param>
-        /// <param name="CheckIn">The check in.</param>
-        /// <param name="Checkout">The checkout.</param>
-        /// <param name="filters">The filters.</param>
+        /// <param name="name">The name.</param>
+        /// <param name="pagedResponse">The paged response.</param>
         /// <returns></returns>
         /// <exception cref="System.NotImplementedException"></exception>
         public async Task<List<HotelDetails>> FindHotelByName(string name, PagedResponse pagedResponse)

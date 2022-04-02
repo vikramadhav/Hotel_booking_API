@@ -16,6 +16,13 @@ namespace Booking.Hotel.Data
         /// <param name="bookingDetails">The booking details.</param>
         /// <returns></returns>
         Task<bool> AddBooking(BookingDetails bookingDetails);
+
+        /// <summary>
+        /// Set the Booking as InActive
+        /// </summary>
+        /// <param name="bookingId">The booking identifier.</param>
+        /// <returns></returns>
+        Task<bool> RemoveBooking(Guid bookingId);
         /// <summary>
         /// Finds the hotel by filters.
         /// </summary>

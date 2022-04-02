@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using Xunit;
 using Booking.Hotel.Domain;
 using System.Collections.Generic;
+using System;
 
 namespace Booking.Hotel.UnitTests
 {
@@ -122,6 +123,99 @@ namespace Booking.Hotel.UnitTests
 
             //Assert
             hotelResponse.Should().BeEmpty();
+        }
+
+
+        [Fact]
+        public async Task AddBookingValidInputShouldReturnTrue()
+        {
+            //Arrage
+            var bookingDetail = new BookingDetails
+            {
+                CheckIn = (int)(DateTime.UtcNow - new DateTime(1970, 1, 1)).TotalSeconds,
+                CheckOut = (int)(DateTime.UtcNow.AddDays(3) - new DateTime(1970, 1, 1)).TotalSeconds,
+                CustomerId = Guid.NewGuid(),
+                HotelId = Guid.NewGuid(),
+                Id = Guid.NewGuid(),
+                isActive = true,
+                RoomId = new Random().Next(1, 100)
+            };
+
+            //Act
+            var bookingResponse = await _hotelStore.AddBooking(bookingDetail).ConfigureAwait(false);
+
+            //Assert
+            bookingResponse.Should().BeTrue();
+        }
+
+        [Fact]
+        public async Task AddBookingInValidInputShouldReturnFalse()
+        {
+            //Arrage
+            var checkInSecond = (int)(DateTime.UtcNow - new DateTime(1970, 1, 1)).TotalSeconds;
+            var checkoutSecond = (int)(DateTime.UtcNow.AddDays(3) - new DateTime(1970, 1, 1)).TotalSeconds;
+            var CustomerId = Guid.NewGuid();
+            var HotelId = Guid.NewGuid();
+
+            var RoomId = new Random().Next(1, 100);
+
+            var bookingDetail = new BookingDetails
+            {
+                CheckIn = checkInSecond,
+                CheckOut = checkoutSecond,
+                CustomerId = CustomerId,
+                HotelId = HotelId,
+                Id = Guid.NewGuid(),
+                isActive = true,
+                RoomId = RoomId
+            };
+
+            //Act
+
+            _ = await _hotelStore.AddBooking(bookingDetail).ConfigureAwait(false);
+
+            // Make Duplicate Booking Which Should Fail
+            var bookingResponse = await _hotelStore.AddBooking(bookingDetail).ConfigureAwait(false);
+
+            //Assert
+            bookingResponse.Should().BeFalse();
+        }
+
+        [Fact]
+        public async Task RemoveBookingValidInputShouldReturnTrue()
+        {
+            //Arrage
+            var id = Guid.NewGuid();
+            var bookingDetail = new BookingDetails
+            {
+                CheckIn = (int)(DateTime.UtcNow - new DateTime(1970, 1, 1)).TotalSeconds,
+                CheckOut = (int)(DateTime.UtcNow.AddDays(3) - new DateTime(1970, 1, 1)).TotalSeconds,
+                CustomerId = Guid.NewGuid(),
+                HotelId = Guid.NewGuid(),
+                Id = id,
+                isActive = true,
+                RoomId = new Random().Next(1, 100)
+            };
+
+            //Act
+            _ = await _hotelStore.AddBooking(bookingDetail).ConfigureAwait(false);
+            var bookingResponse = await _hotelStore.RemoveBooking(id).ConfigureAwait(false);
+
+            //Assert
+            bookingResponse.Should().BeTrue();
+        }
+
+        [Fact]
+        public async Task RemoveBookingInValidInputShouldReturnFalse()
+        {
+            //Arrage
+            var id = Guid.NewGuid();
+
+            //Act
+            var bookingResponse = await _hotelStore.RemoveBooking(id).ConfigureAwait(false);
+
+            //Assert
+            bookingResponse.Should().BeFalse();
         }
     }
 }

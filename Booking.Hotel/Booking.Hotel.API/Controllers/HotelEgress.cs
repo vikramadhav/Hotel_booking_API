@@ -114,16 +114,53 @@ namespace Booking.Hotel.API.Controllers
             return BadRequest("No Parameters Recieved or Cancellation Requested");
         }
 
-
+        /// <summary>
+        /// Adds the booking.
+        /// </summary>
+        /// <param name="bookingDetails">The booking details.</param>
+        /// <param name="ct">The ct.</param>
+        /// <returns></returns>
         [ProducesResponseType(200, Type = typeof(HotelDetails))]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        [HttpPost("byName", Name = "v1/GetHotelByName")]
-        public async Task<ActionResult> AddBooking(CancellationToken ct)
+        [HttpPost("book", Name = "v1/AddBooking")]
+        public async Task<ActionResult> AddBooking([FromBody] BookingDetails bookingDetails, CancellationToken ct)
         {
             if (!ct.IsCancellationRequested)
             {
+                _logger.LogInformation($"{nameof(HotelEgress)}:{nameof(AddBooking)} Started at {DateTime.UtcNow} ");
 
+                var response = await _hotelStore.AddBooking(bookingDetails).ConfigureAwait(false);
+
+                _logger.LogInformation($"{nameof(HotelEgress)}:{nameof(AddBooking)} Finished at {DateTime.UtcNow} ");
+
+                return response ? Ok(response) : BadRequest("Unable to Book Hotel and Given Details");
+            }
+            return BadRequest("No Parameters Recieved or Cancellation Requested");
+        }
+
+
+        /// <summary>
+        /// Removes the booking.
+        /// </summary>
+        /// <param name="bookingid">The bookingid.</param>
+        /// <param name="ct">The ct.</param>
+        /// <returns></returns>
+        [ProducesResponseType(200, Type = typeof(HotelDetails))]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [HttpDelete("cancel", Name = "v1/RemoveBooking")]
+        public async Task<ActionResult> RemoveBooking([FromRoute] string bookingid, CancellationToken ct)
+        {
+            if (!ct.IsCancellationRequested && Guid.TryParse(bookingid,out Guid id))
+            {
+                _logger.LogInformation($"{nameof(HotelEgress)}:{nameof(RemoveBooking)} Started at {DateTime.UtcNow} ");
+
+                var response = await _hotelStore.RemoveBooking(id).ConfigureAwait(false);
+
+                _logger.LogInformation($"{nameof(HotelEgress)}:{nameof(RemoveBooking)} Finished at {DateTime.UtcNow} ");
+
+                return response  ? Ok(response) : BadRequest("Unable to Remove Booking");
             }
             return BadRequest("No Parameters Recieved or Cancellation Requested");
         }
