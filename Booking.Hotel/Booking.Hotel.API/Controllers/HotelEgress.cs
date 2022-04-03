@@ -1,5 +1,6 @@
 ﻿using Booking.Hotel.Data;
 using Booking.Hotel.Domain;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
@@ -16,6 +17,7 @@ namespace Booking.Hotel.API.Controllers
     /// <seealso cref="ControllerBase" />
     [Route("v1/api/[controller]")]
     [Produces("application/json")]
+    [Authorize]
     [ApiController]
     public class HotelEgress : ControllerBase
     {

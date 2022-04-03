@@ -1,4 +1,5 @@
 using Booking.Hotel.Data;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
@@ -41,6 +42,8 @@ namespace Booking.Hotel.API
         {
             services.AddControllers(options => options.Filters.Add(new HttpResponseExceptionFilter()));
             services.AddSingleton<IHotelStore,HotelStore>();
+            services.AddAuthentication("BasicAuthentication")
+             .AddScheme<AuthenticationSchemeOptions, BasicAuthenticationHandler>("BasicAuthentication", null);
             services.AddSwaggerGen(c =>
             {
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "Booking.Hotel.API", Version = "v1" });
@@ -66,6 +69,7 @@ namespace Booking.Hotel.API
             }
             app.UseHttpsRedirection();
             app.UseRouting();
+            app.UseAuthentication();
             app.UseAuthorization();
             app.UseEndpoints(endpoints =>
             {
