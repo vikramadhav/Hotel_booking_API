@@ -4,6 +4,8 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
+using Polly;
+using Polly.Retry;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
@@ -30,6 +32,9 @@ namespace Booking.Hotel.API.Controllers
         /// </summary>
         private readonly ILogger<HotelEgress> _logger;
 
+        private readonly AsyncRetryPolicy _retryPolicy;
+
+
         /// <summary>
         /// Initializes a new instance of the <see cref="HotelEgress" /> class.
         /// </summary>
@@ -38,6 +43,9 @@ namespace Booking.Hotel.API.Controllers
         public HotelEgress(ILogger<HotelEgress> logger, IHotelStore hotelStore)
         {
             _hotelStore = hotelStore;
+            _retryPolicy = Policy
+        .Handle<Exception>()
+        .RetryAsync(2);
             _logger = logger;
         }
 
@@ -49,6 +57,7 @@ namespace Booking.Hotel.API.Controllers
         /// <returns></returns>
         [ProducesResponseType(200, Type = typeof(HotelDetails))]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [HttpGet("details/{hotelCode}", Name = "v1/HotelDetails")]
         public async Task<ActionResult> GetHotelDetails([FromRoute] string hotelCode, CancellationToken ct)
@@ -57,11 +66,11 @@ namespace Booking.Hotel.API.Controllers
             {
                 _logger.LogInformation($"{nameof(HotelEgress)}:{nameof(GetHotelDetails)} Started at {DateTime.UtcNow} ");
 
-                var response = await _hotelStore.GetHotelDetails(hotelCode).ConfigureAwait(false);
+                var response = await _retryPolicy.ExecuteAndCaptureAsync(async () => await _hotelStore.GetHotelDetails(hotelCode).ConfigureAwait(false)).ConfigureAwait(false);
 
                 _logger.LogInformation($"{nameof(HotelEgress)}:{nameof(GetHotelDetails)} Finished at {DateTime.UtcNow} ");
 
-                return response != null ? Ok(response) : BadRequest("Unable to find Hotel Deatils for Given Parameters");
+                return response.Result != null ? Ok(response.Result) : BadRequest("Unable to find Hotel Deatils for Given Parameters");
             }
             return BadRequest("No Parameters Recieved or Cancellation Requested");
         }
@@ -75,6 +84,7 @@ namespace Booking.Hotel.API.Controllers
         /// <returns></returns>
         [ProducesResponseType(200, Type = typeof(HotelDetails))]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [HttpPost("GetHotels", Name = "v1/GetHotels")]
         public async Task<ActionResult> GetHotelByPreference([FromBody] RequestParameters requestDetails, CancellationToken ct)
@@ -83,11 +93,12 @@ namespace Booking.Hotel.API.Controllers
             {
                 _logger.LogInformation($"{nameof(HotelEgress)}:{nameof(GetHotelByPreference)} Started at {DateTime.UtcNow} ");
 
-                var response = await _hotelStore.GetHotelsByPreference(requestDetails.PreferenceType, requestDetails.Radius, requestDetails.PageDetails).ConfigureAwait(false);
+                var response = await _retryPolicy.ExecuteAndCaptureAsync(async () =>
+                await _hotelStore.GetHotelsByPreference(requestDetails.PreferenceType, requestDetails.Radius, requestDetails.PageDetails).ConfigureAwait(false)).ConfigureAwait(false);
 
                 _logger.LogInformation($"{nameof(HotelEgress)}:{nameof(GetHotelByPreference)} Finished at {DateTime.UtcNow} ");
 
-                return response != null ? Ok(response) : BadRequest("Unable to find Hotel Deatils for Given Parameters");
+                return response.Result != null ? Ok(response.Result) : BadRequest("Unable to find Hotel Deatils for Given Parameters");
             }
             return BadRequest("No Parameters Recieved or Cancellation Requested");
         }
@@ -101,6 +112,7 @@ namespace Booking.Hotel.API.Controllers
         /// <returns></returns>
         [ProducesResponseType(200, Type = typeof(HotelDetails))]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [HttpPost("byName", Name = "v1/GetHotelByName")]
         public async Task<ActionResult> GetHotelByName([FromBody] RequestParameters requestDetails, CancellationToken ct)
@@ -109,11 +121,12 @@ namespace Booking.Hotel.API.Controllers
             {
                 _logger.LogInformation($"{nameof(HotelEgress)}:{nameof(GetHotelByName)} Started at {DateTime.UtcNow} ");
 
-                var response = await _hotelStore.FindHotelByName(requestDetails.HotelName, requestDetails.PageDetails ?? new PagedResponse()).ConfigureAwait(false);
+                var response = await _retryPolicy.ExecuteAndCaptureAsync(async () =>
+                await _hotelStore.FindHotelByName(requestDetails.HotelName, requestDetails.PageDetails ?? new PagedResponse()).ConfigureAwait(false)).ConfigureAwait(false);
 
                 _logger.LogInformation($"{nameof(HotelEgress)}:{nameof(GetHotelByName)} Finished at {DateTime.UtcNow} ");
 
-                return response != null ? Ok(response) : BadRequest("Unable to find Hotel Deatils for Given Parameters");
+                return response.Result != null ? Ok(response.Result) : BadRequest("Unable to find Hotel Deatils for Given Parameters");
             }
             return BadRequest("No Parameters Recieved or Cancellation Requested");
         }
@@ -126,6 +139,7 @@ namespace Booking.Hotel.API.Controllers
         /// <returns></returns>
         [ProducesResponseType(200, Type = typeof(HotelDetails))]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [HttpPost("book", Name = "v1/AddBooking")]
         public async Task<ActionResult> AddBooking([FromBody] BookingDetails bookingDetails, CancellationToken ct)
@@ -134,11 +148,11 @@ namespace Booking.Hotel.API.Controllers
             {
                 _logger.LogInformation($"{nameof(HotelEgress)}:{nameof(AddBooking)} Started at {DateTime.UtcNow} ");
 
-                var response = await _hotelStore.AddBooking(bookingDetails).ConfigureAwait(false);
+                var response = await _retryPolicy.ExecuteAndCaptureAsync(async () => await _hotelStore.AddBooking(bookingDetails).ConfigureAwait(false)).ConfigureAwait(false);
 
                 _logger.LogInformation($"{nameof(HotelEgress)}:{nameof(AddBooking)} Finished at {DateTime.UtcNow} ");
 
-                return response ? Ok(response) : BadRequest("Unable to Book Hotel and Given Details");
+                return response.Result ? Ok(response.Result) : BadRequest("Unable to Book Hotel and Given Details");
             }
             return BadRequest("No Parameters Recieved or Cancellation Requested");
         }
@@ -152,6 +166,7 @@ namespace Booking.Hotel.API.Controllers
         /// <returns></returns>
         [ProducesResponseType(200, Type = typeof(HotelDetails))]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [HttpDelete("cancel", Name = "v1/RemoveBooking")]
         public async Task<ActionResult> RemoveBooking([FromRoute] string bookingid, CancellationToken ct)
@@ -160,11 +175,11 @@ namespace Booking.Hotel.API.Controllers
             {
                 _logger.LogInformation($"{nameof(HotelEgress)}:{nameof(RemoveBooking)} Started at {DateTime.UtcNow} ");
 
-                var response = await _hotelStore.RemoveBooking(id).ConfigureAwait(false);
+                var response = await _retryPolicy.ExecuteAndCaptureAsync(async () => await _hotelStore.RemoveBooking(id).ConfigureAwait(false)).ConfigureAwait(false);
 
                 _logger.LogInformation($"{nameof(HotelEgress)}:{nameof(RemoveBooking)} Finished at {DateTime.UtcNow} ");
 
-                return response ? Ok(response) : BadRequest("Unable to Remove Booking");
+                return response.Result ? Ok(response.Result) : BadRequest("Unable to Remove Booking");
             }
             return BadRequest("No Parameters Recieved or Cancellation Requested");
         }
@@ -178,6 +193,7 @@ namespace Booking.Hotel.API.Controllers
         /// <returns></returns>
         [ProducesResponseType(200, Type = typeof(HotelDetails))]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [HttpPost("nearby", Name = "v1/GetHotelByGeoLocation")]
         public async Task<ActionResult> GetHotelByGeoLocation([FromBody] RequestParameters requestParams, CancellationToken ct)
@@ -186,11 +202,12 @@ namespace Booking.Hotel.API.Controllers
             {
                 _logger.LogInformation($"{nameof(HotelEgress)}:{nameof(RemoveBooking)} Started at {DateTime.UtcNow} ");
 
-                var response = await _hotelStore.GetHotelByGeoLocation(requestParams.GeoCoordinates, requestParams.PageDetails ?? new PagedResponse()).ConfigureAwait(false);
+                var response = await _retryPolicy.ExecuteAndCaptureAsync(async () =>
+                await _hotelStore.GetHotelByGeoLocation(requestParams.GeoCoordinates, requestParams.PageDetails ?? new PagedResponse()).ConfigureAwait(false)).ConfigureAwait(false);
 
                 _logger.LogInformation($"{nameof(HotelEgress)}:{nameof(RemoveBooking)} Finished at {DateTime.UtcNow} ");
 
-                return response != null ? Ok(response) : BadRequest("Unable to Remove Booking");
+                return response.Result != null ? Ok(response.Result) : BadRequest("Unable to Remove Booking");
             }
             return BadRequest("No Parameters Recieved or Cancellation Requested");
         }
